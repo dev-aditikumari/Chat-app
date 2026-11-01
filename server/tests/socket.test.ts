@@ -4,9 +4,9 @@ import type { RunningServer } from "../src/server";
 import { clearDb, registerUser, startTestServer, stopTestServer, type TestUser } from "./helpers";
 
 let server: RunningServer;
-let alice: TestUser;
-let bob: TestUser;
-let carol: TestUser;
+let aditi: TestUser;
+let shashank: TestUser;
+let rohan: TestUser;
 const sockets: Socket[] = [];
 
 function client(token: string): Promise<Socket> {
@@ -28,9 +28,9 @@ afterAll(async () => {
 });
 beforeEach(async () => {
   await clearDb();
-  alice = await registerUser(server, "alice");
-  bob = await registerUser(server, "bob");
-  carol = await registerUser(server, "carol");
+  aditi = await registerUser(server, "aditi_kumari");
+  shashank = await registerUser(server, "shashank_shekhar");
+  rohan = await registerUser(server, "rohan_mehta");
 });
 afterEach(() => {
   while (sockets.length) sockets.pop()?.disconnect();
@@ -42,50 +42,50 @@ it("refuses a connection without a valid token", async () => {
 });
 
 it("delivers a message sent over the socket to the recipient only", async () => {
-  const a = await client(alice.token);
-  const b = await client(bob.token);
-  const c = await client(carol.token);
-  const carolGot = jest.fn();
-  c.on("msg-receive", carolGot);
+  const a = await client(aditi.token);
+  const b = await client(shashank.token);
+  const c = await client(rohan.token);
+  const rohanGot = jest.fn();
+  c.on("msg-receive", rohanGot);
 
   const received = once<{ from: string; text: string }>(b, "msg-receive");
   const ack = await new Promise<{ status: boolean }>((resolve) =>
-    a.emit("msg-send", { to: bob.id, message: "hi bob" }, resolve)
+    a.emit("msg-send", { to: shashank.id, message: "hi shashank" }, resolve)
   );
   expect(ack.status).toBe(true);
-  expect(await received).toMatchObject({ from: alice.id, text: "hi bob" });
+  expect(await received).toMatchObject({ from: aditi.id, text: "hi shashank" });
   await new Promise((r) => setTimeout(r, 100));
-  expect(carolGot).not.toHaveBeenCalled();
+  expect(rohanGot).not.toHaveBeenCalled();
 
   const history = await request(server.httpServer)
-    .get(`/api/messages/${alice.id}`)
-    .set("Authorization", `Bearer ${bob.token}`);
+    .get(`/api/messages/${aditi.id}`)
+    .set("Authorization", `Bearer ${shashank.token}`);
   expect(history.body.messages).toHaveLength(1);
 });
 
 it("delivers messages sent through the REST endpoint live as well", async () => {
-  const b = await client(bob.token);
+  const b = await client(shashank.token);
   const received = once<{ text: string }>(b, "msg-receive");
   await request(server.httpServer)
     .post("/api/messages/add")
-    .set("Authorization", `Bearer ${alice.token}`)
-    .send({ to: bob.id, message: "via rest" });
+    .set("Authorization", `Bearer ${aditi.token}`)
+    .send({ to: shashank.id, message: "via rest" });
   expect((await received).text).toBe("via rest");
 });
 
 it("works in both directions between two clients", async () => {
-  const a = await client(alice.token);
-  const b = await client(bob.token);
-  const toBob = once<{ text: string }>(b, "msg-receive");
-  a.emit("msg-send", { to: bob.id, message: "ping" });
-  expect((await toBob).text).toBe("ping");
-  const toAlice = once<{ text: string }>(a, "msg-receive");
-  b.emit("msg-send", { to: alice.id, message: "pong" });
-  expect((await toAlice).text).toBe("pong");
+  const a = await client(aditi.token);
+  const b = await client(shashank.token);
+  const toShashank = once<{ text: string }>(b, "msg-receive");
+  a.emit("msg-send", { to: shashank.id, message: "ping" });
+  expect((await toShashank).text).toBe("ping");
+  const toAditi = once<{ text: string }>(a, "msg-receive");
+  b.emit("msg-send", { to: aditi.id, message: "pong" });
+  expect((await toAditi).text).toBe("pong");
 });
 
 it("uses the authenticated user as sender and reports errors in the ack", async () => {
-  const a = await client(alice.token);
+  const a = await client(aditi.token);
   const bad = await new Promise<{ status: boolean; msg?: string }>((resolve) =>
     a.emit("msg-send", { to: "nope", message: "x" }, resolve)
   );
@@ -95,11 +95,11 @@ it("uses the authenticated user as sender and reports errors in the ack", async 
 });
 
 it("tracks online users", async () => {
-  const a = await client(alice.token);
-  const b = await client(bob.token);
+  const a = await client(aditi.token);
+  const b = await client(shashank.token);
   await new Promise((r) => setTimeout(r, 100));
-  expect(server.hub.onlineUserIds().sort()).toEqual([alice.id, bob.id].sort());
+  expect(server.hub.onlineUserIds().sort()).toEqual([aditi.id, shashank.id].sort());
   const update = once<string[]>(a, "online-users");
   b.disconnect();
-  expect(await update).toEqual([alice.id]);
+  expect(await update).toEqual([aditi.id]);
 });

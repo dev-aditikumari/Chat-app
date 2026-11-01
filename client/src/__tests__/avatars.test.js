@@ -2,12 +2,12 @@ import axios from "axios";
 import { initialsSvg, localAvatars, remoteAvatars } from "../utils/avatars";
 
 test("initials avatar uses the first letter, uppercased", () => {
-  expect(initialsSvg("bob", "#fff")).toContain(">B</text>");
+  expect(initialsSvg("shashank_shekhar", "#fff")).toContain(">S</text>");
   expect(initialsSvg("", "#fff")).toContain(">?</text>");
 });
 
 test("local avatars are distinct base64 SVGs", () => {
-  const list = localAvatars("alice", 4, 0);
+  const list = localAvatars("aditi_kumari", 4, 0);
   expect(list).toHaveLength(4);
   expect(new Set(list).size).toBe(4);
   expect(atob(list[0])).toMatch(/^<svg/);

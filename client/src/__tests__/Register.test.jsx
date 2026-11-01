@@ -18,7 +18,7 @@ const renderRegister = () =>
     </MemoryRouter>
   );
 
-function fill({ username = "alice", email = "alice@example.test", password = "password123", confirm = "password123" } = {}) {
+function fill({ username = "aditi_kumari", email = "aditi_kumari@example.test", password = "password123", confirm = "password123" } = {}) {
   if (username) userEvent.type(screen.getByLabelText("Username"), username);
   if (email) userEvent.type(screen.getByLabelText("Email"), email);
   if (password) userEvent.type(screen.getByLabelText("Password"), password);
@@ -44,13 +44,13 @@ test.each([
 });
 
 test("sends username, email and password (not the confirmation) and stores the session", async () => {
-  api.post.mockResolvedValue({ data: { status: true, user: { _id: "1", username: "alice" }, token: "tok" } });
+  api.post.mockResolvedValue({ data: { status: true, user: { _id: "1", username: "aditi_kumari" }, token: "tok" } });
   renderRegister();
   fill();
   expect(await screen.findByText("chat home")).toBeInTheDocument();
   expect(api.post).toHaveBeenCalledWith(registerRoute, {
-    username: "alice",
-    email: "alice@example.test",
+    username: "aditi_kumari",
+    email: "aditi_kumari@example.test",
     password: "password123",
   });
   expect(localStorage.getItem("chat-app-token")).toBe("tok");

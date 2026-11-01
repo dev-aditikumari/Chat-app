@@ -118,8 +118,14 @@ const Container = styled.div`
         justify-content: center;
         font-weight: bold;
       }
+      .username {
+        min-width: 0;
+      }
       .username h3 {
         color: white;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
       }
       .online {
         margin-left: auto;
@@ -145,14 +151,22 @@ const Container = styled.div`
     display: flex;
     justify-content: center;
     align-items: center;
-    gap: 2rem;
+    gap: 1rem;
+    padding: 0 1rem;
     .avatar img {
       height: 4rem;
       width: 4rem;
       border-radius: 50%;
     }
+    .username {
+      min-width: 0;
+    }
     .username h2 {
       color: white;
+      font-size: 1.1rem;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
     @media screen and (min-width: 720px) and (max-width: 1080px) {
       gap: 0.5rem;

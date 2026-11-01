@@ -5,7 +5,7 @@ import type { RunningServer } from "../src/server";
 import { clearDb, registerUser, startTestServer, stopTestServer, testConfig } from "./helpers";
 
 let server: RunningServer;
-const valid = { username: "alice", email: "alice@example.test", password: "password123" };
+const valid = { username: "aditi_kumari", email: "aditi_kumari@example.test", password: "password123" };
 
 beforeAll(async () => {
   server = await startTestServer("auth-test");
@@ -19,9 +19,9 @@ describe("POST /api/auth/register", () => {
     expect(res.status).toBe(201);
     expect(res.body.status).toBe(true);
     expect(res.body.token).toEqual(expect.any(String));
-    expect(res.body.user.username).toBe("alice");
+    expect(res.body.user.username).toBe("aditi_kumari");
     expect(JSON.stringify(res.body)).not.toMatch(/password/i);
-    const stored = await User.findOne({ username: "alice" });
+    const stored = await User.findOne({ username: "aditi_kumari" });
     expect(stored?.passwordHash).not.toBe(valid.password);
     expect(stored?.passwordHash).toMatch(/^\$2[aby]\$/);
   });
@@ -50,7 +50,7 @@ describe("POST /api/auth/register", () => {
     await request(server.httpServer).post("/api/auth/register").send(valid);
     const res = await request(server.httpServer)
       .post("/api/auth/register")
-      .send({ ...valid, username: "alice2" });
+      .send({ ...valid, username: "aditi_kumari2" });
     expect(res.status).toBe(409);
     expect(res.body.msg).toBe("Email already used");
   });
@@ -73,7 +73,7 @@ describe("POST /api/auth/login", () => {
   it("logs in with correct credentials", async () => {
     const res = await request(server.httpServer)
       .post("/api/auth/login")
-      .send({ username: "alice", password: "password123" });
+      .send({ username: "aditi_kumari", password: "password123" });
     expect(res.status).toBe(200);
     expect(res.body.status).toBe(true);
     expect(res.body.token).toEqual(expect.any(String));
@@ -82,7 +82,7 @@ describe("POST /api/auth/login", () => {
   it("rejects a wrong password", async () => {
     const res = await request(server.httpServer)
       .post("/api/auth/login")
-      .send({ username: "alice", password: "wrong-password" });
+      .send({ username: "aditi_kumari", password: "wrong-password" });
     expect(res.status).toBe(401);
     expect(res.body).toEqual({ status: false, msg: "Incorrect username or password" });
   });
@@ -96,7 +96,7 @@ describe("POST /api/auth/login", () => {
   });
 
   it("requires both fields", async () => {
-    const res = await request(server.httpServer).post("/api/auth/login").send({ username: "alice" });
+    const res = await request(server.httpServer).post("/api/auth/login").send({ username: "aditi_kumari" });
     expect(res.status).toBe(400);
   });
 });
@@ -118,56 +118,56 @@ describe("protected routes", () => {
   });
 
   it("reject a token signed with another secret", async () => {
-    const user = await registerUser(server, "alice");
+    const user = await registerUser(server, "aditi_kumari");
     const forged = jwt.sign({ sub: user.id }, "some-other-secret-value");
     const res = await request(server.httpServer).get("/api/auth/me").set("Authorization", `Bearer ${forged}`);
     expect(res.status).toBe(401);
   });
 
   it("reject an expired token", async () => {
-    const user = await registerUser(server, "alice");
+    const user = await registerUser(server, "aditi_kumari");
     const expired = jwt.sign({ sub: user.id }, testConfig.jwtSecret, { expiresIn: -10 });
     const res = await request(server.httpServer).get("/api/auth/me").set("Authorization", `Bearer ${expired}`);
     expect(res.status).toBe(401);
   });
 
   it("accept a valid token", async () => {
-    const user = await registerUser(server, "alice");
+    const user = await registerUser(server, "aditi_kumari");
     const res = await request(server.httpServer).get("/api/auth/me").set("Authorization", `Bearer ${user.token}`);
     expect(res.status).toBe(200);
-    expect(res.body.user.username).toBe("alice");
+    expect(res.body.user.username).toBe("aditi_kumari");
   });
 });
 
 describe("avatar and user list", () => {
   it("saves an avatar for the authenticated user only", async () => {
-    const alice = await registerUser(server, "alice");
+    const aditi = await registerUser(server, "aditi_kumari");
     const res = await request(server.httpServer)
       .post("/api/auth/setAvatar")
-      .set("Authorization", `Bearer ${alice.token}`)
+      .set("Authorization", `Bearer ${aditi.token}`)
       .send({ image: Buffer.from("<svg/>").toString("base64") });
     expect(res.status).toBe(200);
     expect(res.body.isSet).toBe(true);
-    const me = await request(server.httpServer).get("/api/auth/me").set("Authorization", `Bearer ${alice.token}`);
+    const me = await request(server.httpServer).get("/api/auth/me").set("Authorization", `Bearer ${aditi.token}`);
     expect(me.body.user.isAvatarImageSet).toBe(true);
   });
 
   it("rejects an avatar that is not base64", async () => {
-    const alice = await registerUser(server, "alice");
+    const aditi = await registerUser(server, "aditi_kumari");
     const res = await request(server.httpServer)
       .post("/api/auth/setAvatar")
-      .set("Authorization", `Bearer ${alice.token}`)
+      .set("Authorization", `Bearer ${aditi.token}`)
       .send({ image: "<script>alert(1)</script>" });
     expect(res.status).toBe(400);
   });
 
   it("lists other users and excludes the caller", async () => {
-    const alice = await registerUser(server, "alice");
-    await registerUser(server, "bob");
-    await registerUser(server, "carol");
-    const res = await request(server.httpServer).get("/api/auth/allusers").set("Authorization", `Bearer ${alice.token}`);
+    const aditi = await registerUser(server, "aditi_kumari");
+    await registerUser(server, "shashank_shekhar");
+    await registerUser(server, "rohan_mehta");
+    const res = await request(server.httpServer).get("/api/auth/allusers").set("Authorization", `Bearer ${aditi.token}`);
     expect(res.status).toBe(200);
-    expect(res.body.map((u: { username: string }) => u.username)).toEqual(["bob", "carol"]);
+    expect(res.body.map((u: { username: string }) => u.username)).toEqual(["rohan_mehta", "shashank_shekhar"]);
     expect(JSON.stringify(res.body)).not.toMatch(/passwordHash/);
   });
 });

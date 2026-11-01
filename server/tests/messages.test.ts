@@ -3,9 +3,9 @@ import type { RunningServer } from "../src/server";
 import { clearDb, registerUser, startTestServer, stopTestServer, type TestUser } from "./helpers";
 
 let server: RunningServer;
-let alice: TestUser;
-let bob: TestUser;
-let carol: TestUser;
+let aditi: TestUser;
+let shashank: TestUser;
+let rohan: TestUser;
 
 beforeAll(async () => {
   server = await startTestServer("messages-test");
@@ -13,9 +13,9 @@ beforeAll(async () => {
 afterAll(() => stopTestServer(server));
 beforeEach(async () => {
   await clearDb();
-  alice = await registerUser(server, "alice");
-  bob = await registerUser(server, "bob");
-  carol = await registerUser(server, "carol");
+  aditi = await registerUser(server, "aditi_kumari");
+  shashank = await registerUser(server, "shashank_shekhar");
+  rohan = await registerUser(server, "rohan_mehta");
 });
 
 const send = (from: TestUser, to: TestUser, message: string) =>
@@ -25,74 +25,74 @@ const fetchChat = (me: TestUser, other: TestUser) =>
 
 describe("sending", () => {
   it("stores a message with the sender taken from the token", async () => {
-    const res = await send(alice, bob, "  hello bob ");
+    const res = await send(aditi, shashank, "  hello shashank ");
     expect(res.status).toBe(201);
-    expect(res.body.message).toMatchObject({ from: alice.id, to: bob.id, text: "hello bob" });
+    expect(res.body.message).toMatchObject({ from: aditi.id, to: shashank.id, text: "hello shashank" });
   });
 
   it("rejects empty messages, unknown recipients and self messages", async () => {
-    expect((await send(alice, bob, "   ")).status).toBe(400);
-    expect((await send(alice, alice, "hi me")).status).toBe(400);
+    expect((await send(aditi, shashank, "   ")).status).toBe(400);
+    expect((await send(aditi, aditi, "hi me")).status).toBe(400);
     const bad = await request(server.httpServer)
       .post("/api/messages/add")
-      .set("Authorization", `Bearer ${alice.token}`)
+      .set("Authorization", `Bearer ${aditi.token}`)
       .send({ to: "not-an-id", message: "x" });
     expect(bad.status).toBe(400);
     const missing = await request(server.httpServer)
       .post("/api/messages/add")
-      .set("Authorization", `Bearer ${alice.token}`)
+      .set("Authorization", `Bearer ${aditi.token}`)
       .send({ to: "64b7f0f0f0f0f0f0f0f0f0f0", message: "x" });
     expect(missing.status).toBe(404);
   });
 
   it("rejects a message over 2000 characters", async () => {
-    const res = await send(alice, bob, "a".repeat(2001));
+    const res = await send(aditi, shashank, "a".repeat(2001));
     expect(res.status).toBe(400);
   });
 
   it("ignores a spoofed sender field in the body", async () => {
     const res = await request(server.httpServer)
       .post("/api/messages/add")
-      .set("Authorization", `Bearer ${alice.token}`)
-      .send({ to: bob.id, message: "hi", from: carol.id });
-    expect(res.body.message.from).toBe(alice.id);
+      .set("Authorization", `Bearer ${aditi.token}`)
+      .send({ to: shashank.id, message: "hi", from: rohan.id });
+    expect(res.body.message.from).toBe(aditi.id);
   });
 });
 
 describe("fetching a conversation", () => {
   it("returns both directions in order for both participants", async () => {
-    await send(alice, bob, "one");
-    await send(bob, alice, "two");
-    await send(alice, bob, "three");
+    await send(aditi, shashank, "one");
+    await send(shashank, aditi, "two");
+    await send(aditi, shashank, "three");
     for (const [me, other] of [
-      [alice, bob],
-      [bob, alice],
+      [aditi, shashank],
+      [shashank, aditi],
     ] as const) {
       const res = await fetchChat(me, other);
       expect(res.status).toBe(200);
       expect(res.body.messages.map((m: { text: string }) => m.text)).toEqual(["one", "two", "three"]);
-      expect(res.body.messages.map((m: { from: string }) => m.from)).toEqual([alice.id, bob.id, alice.id]);
+      expect(res.body.messages.map((m: { from: string }) => m.from)).toEqual([aditi.id, shashank.id, aditi.id]);
     }
   });
 
   it("does not let a third user read someone else's chat", async () => {
-    await send(alice, bob, "secret");
-    const res = await fetchChat(carol, bob);
+    await send(aditi, shashank, "secret");
+    const res = await fetchChat(rohan, shashank);
     expect(res.status).toBe(200);
     expect(res.body.messages).toEqual([]);
-    const other = await fetchChat(carol, alice);
+    const other = await fetchChat(rohan, aditi);
     expect(other.body.messages).toEqual([]);
   });
 
   it("keeps conversations separate", async () => {
-    await send(alice, bob, "to bob");
-    await send(alice, carol, "to carol");
-    const res = await fetchChat(alice, carol);
-    expect(res.body.messages.map((m: { text: string }) => m.text)).toEqual(["to carol"]);
+    await send(aditi, shashank, "to shashank");
+    await send(aditi, rohan, "to rohan");
+    const res = await fetchChat(aditi, rohan);
+    expect(res.body.messages.map((m: { text: string }) => m.text)).toEqual(["to rohan"]);
   });
 
   it("rejects an invalid user id", async () => {
-    const res = await request(server.httpServer).get("/api/messages/xyz").set("Authorization", `Bearer ${alice.token}`);
+    const res = await request(server.httpServer).get("/api/messages/xyz").set("Authorization", `Bearer ${aditi.token}`);
     expect(res.status).toBe(400);
   });
 });

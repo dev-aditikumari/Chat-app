@@ -10,7 +10,7 @@ jest.mock("../utils/api", () => ({ __esModule: true, default: { post: jest.fn(),
 
 beforeEach(() => {
   localStorage.clear();
-  localStorage.setItem("chat-app-user", JSON.stringify({ _id: "1", username: "alice" }));
+  localStorage.setItem("chat-app-user", JSON.stringify({ _id: "1", username: "aditi_kumari" }));
   localStorage.setItem("chat-app-token", "tok");
   jest.clearAllMocks();
 });

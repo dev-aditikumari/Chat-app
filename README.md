@@ -67,7 +67,7 @@ Requirements: Node 20. No MongoDB install is needed for development.
 # terminal 1: API on port 5200 with an in-memory MongoDB and two demo users
 cd server
 npm install
-npm run dev:memory        # alice / bob, password: demo-password-1
+npm run dev:memory        # seeds six demo users, password: demo-password-1
 
 # terminal 2: React app on port 5210
 cd client
@@ -75,7 +75,7 @@ npm install
 PORT=5210 npm start
 ```
 
-`dev:memory` downloads a MongoDB binary through `mongodb-memory-server` the first time it runs and loses all data when stopped. Set `CLIENT_ORIGIN` if the client runs on another origin than `http://localhost:5210`.
+`dev:memory` seeds aditi_kumari, shashank_shekhar, rohan_mehta, priya_sharma, ananya_iyer and vikram_singh (all with the dev-only password `demo-password-1`) and a short conversation between the first two. It downloads a MongoDB binary through `mongodb-memory-server` the first time it runs and loses all data when stopped. Set `CLIENT_ORIGIN` if the client runs on another origin than `http://localhost:5210`.
 
 To use a real MongoDB, copy `server/.env.example` to `server/.env`, adjust it and run `npm run dev` (or `npm run build && npm start`).
 
